@@ -2,13 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import {
-  TrendingUp,
-  ArrowRight,
-  Mail,
-  Eye,
-  EyeOff,
-} from "lucide-react";
+import { ArrowRight, Mail, Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
@@ -68,38 +62,35 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#f5f7fa] px-6 dark:bg-[#0b1120]">
+    <div className="flex min-h-screen items-center justify-center bg-white px-6 dark:bg-neutral-900">
       <div className="w-full max-w-sm animate-fadeIn">
         {/* Logo */}
-        <div className="flex items-center justify-center gap-2.5 mb-8">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-700 shadow-md">
-            <TrendingUp className="h-5 w-5 text-white" />
-          </div>
-          <span className="text-xl font-semibold text-slate-800 dark:text-white tracking-tight">
+        <div className="flex items-center justify-center mb-8">
+          <span className="text-xl font-semibold text-neutral-800 dark:text-neutral-100 tracking-tight">
             TradvisorAI
           </span>
         </div>
 
         {/* Title */}
-        <h1 className="text-center text-2xl font-semibold text-slate-800 dark:text-white mb-1.5">
+        <h1 className="text-center text-2xl font-semibold text-neutral-800 dark:text-neutral-100 mb-1.5">
           {isSignUp ? "Create Account" : "Welcome back"}
         </h1>
-        <p className="text-center text-sm text-slate-500 dark:text-slate-400 mb-8">
+        <p className="text-center text-sm text-neutral-500 dark:text-neutral-400 mb-8">
           {isSignUp ? "Sign up to start researching stocks" : "Sign in to continue"}
         </p>
 
         {/* Error / Message */}
         {error && (
-          <div className="mb-5 rounded-xl border border-red-200/50 bg-red-50/70 px-4 py-3 text-sm text-red-700 dark:border-red-800/30 dark:bg-red-900/15 dark:text-red-400">{error}</div>
+          <div className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800/30 dark:bg-red-900/15 dark:text-red-400">{error}</div>
         )}
         {message && (
-          <div className="mb-5 rounded-xl border border-blue-200/50 bg-blue-50/70 px-4 py-3 text-sm text-blue-700 dark:border-blue-800/30 dark:bg-blue-900/15 dark:text-blue-400">{message}</div>
+          <div className="mb-5 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-700 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">{message}</div>
         )}
 
         {/* Google Auth */}
-        <button onClick={handleGoogleLogin} disabled={loading} className="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200/60 bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed dark:border-slate-700/40 dark:bg-slate-800/40 dark:text-slate-300 dark:hover:bg-slate-800/60">
+        <button onClick={handleGoogleLogin} disabled={loading} className="flex w-full items-center justify-center gap-3 rounded-lg border border-neutral-200 bg-white px-4 py-3 text-sm font-medium text-neutral-700 shadow-sm transition-all hover:bg-neutral-50 hover:shadow disabled:opacity-50 disabled:cursor-not-allowed dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-750">
           {loading ? (
-            <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-slate-800 dark:border-slate-600 dark:border-t-white" />
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-700 dark:border-neutral-600 dark:border-t-white" />
           ) : (
             <svg className="h-5 w-5" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -113,32 +104,32 @@ export default function LoginPage() {
 
         {/* Divider */}
         <div className="my-6 flex items-center gap-4">
-          <div className="h-px flex-1 bg-slate-200/60 dark:bg-slate-700/40" />
-          <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">or</span>
-          <div className="h-px flex-1 bg-slate-200/60 dark:bg-slate-700/40" />
+          <div className="h-px flex-1 bg-neutral-200 dark:bg-neutral-700" />
+          <span className="text-xs font-medium text-neutral-400 uppercase tracking-wider">or</span>
+          <div className="h-px flex-1 bg-neutral-200 dark:bg-neutral-700" />
         </div>
 
         {/* Email/Password Form */}
         <form onSubmit={handleEmailAuth} className="space-y-4">
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-600 dark:text-slate-300">Email</label>
+            <label className="mb-1.5 block text-sm font-medium text-neutral-600 dark:text-neutral-300">Email</label>
             <div className="relative">
-              <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full rounded-xl border border-slate-200/60 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/15 transition-all dark:border-slate-700/40 dark:bg-slate-800/40 dark:text-white dark:placeholder:text-slate-500" required />
+              <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+              <input type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full rounded-lg border border-neutral-200 bg-white py-2.5 pl-10 pr-4 text-sm text-neutral-800 placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-200 transition-all dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:placeholder:text-neutral-500 dark:focus:ring-neutral-700" required />
             </div>
           </div>
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-600 dark:text-slate-300">Password</label>
+            <label className="mb-1.5 block text-sm font-medium text-neutral-600 dark:text-neutral-300">Password</label>
             <div className="relative">
-              <input type={showPassword ? "text" : "password"} placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full rounded-xl border border-slate-200/60 bg-white py-2.5 pl-4 pr-10 text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/15 transition-all dark:border-slate-700/40 dark:bg-slate-800/40 dark:text-white dark:placeholder:text-slate-500" minLength={6} required />
-              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors dark:hover:text-slate-300">
+              <input type={showPassword ? "text" : "password"} placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full rounded-lg border border-neutral-200 bg-white py-2.5 pl-4 pr-10 text-sm text-neutral-800 placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-200 transition-all dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:placeholder:text-neutral-500 dark:focus:ring-neutral-700" minLength={6} required />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 transition-colors dark:hover:text-neutral-300">
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
           </div>
-          <button type="submit" disabled={loading} className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-800 px-4 py-3 text-sm font-medium text-white shadow-sm transition-all hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100">
+          <button type="submit" disabled={loading} className="flex w-full items-center justify-center gap-2 rounded-lg bg-neutral-800 px-4 py-3 text-sm font-medium text-white shadow-sm transition-all hover:bg-neutral-700 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100">
             {loading ? (
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white dark:border-slate-300/30 dark:border-t-slate-900" />
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white dark:border-neutral-300/30 dark:border-t-neutral-900" />
             ) : (
               <>{isSignUp ? "Create Account" : "Sign In"}<ArrowRight className="h-4 w-4" /></>
             )}
@@ -146,9 +137,9 @@ export default function LoginPage() {
         </form>
 
         {/* Toggle */}
-        <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
+        <p className="mt-6 text-center text-sm text-neutral-500 dark:text-neutral-400">
           {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
-          <button onClick={() => { setIsSignUp(!isSignUp); setError(null); setMessage(null); }} className="font-medium text-slate-800 hover:underline underline-offset-2 dark:text-white">
+          <button onClick={() => { setIsSignUp(!isSignUp); setError(null); setMessage(null); }} className="font-medium text-neutral-800 hover:underline underline-offset-2 dark:text-white">
             {isSignUp ? "Sign in" : "Sign up"}
           </button>
         </p>

@@ -58,11 +58,7 @@ export function ChatInput({
 
   return (
     <div className="max-w-3xl mx-auto">
-      {/* Glass card container — Atelier style */}
-      <div className="glass-surface rounded-2xl p-3 md:p-4 flex items-end gap-3 shadow-lg transition-all duration-200 focus-within:shadow-xl">
-        {/* Divider dot */}
-        <span className="w-px h-5 bg-slate-200/40 dark:bg-slate-700/40 shrink-0 mb-1.5 hidden md:block"></span>
-
+      <div className="rounded-2xl border border-neutral-200/60 bg-white p-3 md:p-4 flex items-end gap-3 shadow-sm transition-all focus-within:shadow-md focus-within:border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800">
         <textarea
           ref={textareaRef}
           value={value}
@@ -70,13 +66,13 @@ export function ChatInput({
           onKeyDown={handleKeyDown}
           placeholder="Ask about any stock..."
           rows={1}
-          className="flex-1 min-w-0 resize-none bg-transparent text-[14px] text-slate-800 placeholder:text-slate-400/70 focus:outline-none dark:text-slate-100 dark:placeholder:text-slate-500/70 leading-relaxed font-medium tracking-wide"
+          className="flex-1 min-w-0 resize-none bg-transparent text-[14px] text-neutral-800 placeholder:text-neutral-400 focus:outline-none dark:text-neutral-100 dark:placeholder:text-neutral-500 leading-relaxed"
         />
 
         {isLoading ? (
           <button
             onClick={onStop}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-50/80 text-red-500 transition-all duration-150 hover:bg-red-100 hover:scale-105 active:scale-95 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/35"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-neutral-500 transition-colors hover:bg-neutral-200 active:scale-95 dark:bg-neutral-700 dark:text-neutral-400 dark:hover:bg-neutral-600"
             title="Stop generation"
           >
             <Square className="h-4 w-4" />
@@ -86,10 +82,10 @@ export function ChatInput({
             onClick={handleSubmit}
             disabled={!value.trim()}
             className={cn(
-              "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all duration-200",
+              "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-all",
               value.trim()
-                ? "bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-700 text-white shadow-lg shadow-blue-500/20 ring-1 ring-blue-400/15 hover:shadow-xl hover:scale-105 active:scale-95"
-                : "bg-slate-100/60 text-slate-400 dark:bg-slate-700/40 dark:text-slate-500"
+                ? "bg-neutral-800 text-white hover:bg-neutral-700 active:scale-95 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200"
+                : "bg-neutral-100 text-neutral-400 dark:bg-neutral-700 dark:text-neutral-500"
             )}
             title="Send message"
           >
@@ -98,7 +94,7 @@ export function ChatInput({
         )}
       </div>
 
-      <p className="mt-2.5 text-center text-[10px] text-slate-400/50 tracking-wider dark:text-slate-500/40 font-medium uppercase">
+      <p className="mt-2.5 text-center text-[10px] text-neutral-400/60 tracking-wider dark:text-neutral-500/50 font-medium uppercase">
         TradvisorAI provides analysis, not financial advice
       </p>
     </div>
