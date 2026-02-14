@@ -6,7 +6,7 @@ import { ChatMessages } from "@/components/chat-messages";
 import { ChatInput } from "@/components/chat-input";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useChat } from "@/hooks/use-chat";
-import { TrendingUp, Sparkles } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 
 export default function ChatPage() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -44,30 +44,21 @@ export default function ChatPage() {
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col min-w-0 h-full relative">
-        {/* Header — editorial glass bar */}
+        {/* Header */}
         <header className="glass-bar h-14 px-5 flex items-center justify-between shrink-0 z-20">
-          {/* Mobile: Logo */}
           <div className="flex items-center gap-2.5 lg:hidden">
-            <div className="relative">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-700 shadow-lg shadow-blue-500/20 ring-1 ring-blue-400/20">
-                <TrendingUp className="h-4 w-4 text-white" />
-              </div>
-              <div className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-white shadow ring-1 ring-slate-100 dark:bg-slate-800 dark:ring-slate-700">
-                <Sparkles className="h-2 w-2 text-cyan-500" />
-              </div>
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-700 shadow-md">
+              <TrendingUp className="h-4 w-4 text-white" />
             </div>
-            <span className="font-serif text-[15px] font-semibold text-slate-800 dark:text-white tracking-tight">
-              <span className="italic">Tradvisor</span>AI
+            <span className="text-[15px] font-semibold text-slate-800 dark:text-white tracking-tight">
+              TradvisorAI
             </span>
           </div>
 
-          {/* Desktop: Editorial label + live indicator */}
-          <div className="hidden lg:flex items-center gap-4">
-            <p className="editorial-label">AI Equity Research</p>
-            <div className="badge-live">Live</div>
+          <div className="hidden lg:flex items-center gap-3">
+            <span className="text-sm font-medium text-slate-500 dark:text-slate-400">TradvisorAI</span>
           </div>
 
-          {/* Right: Theme toggle */}
           <div className="flex items-center gap-3">
             <ThemeToggle />
           </div>

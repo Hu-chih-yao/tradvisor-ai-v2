@@ -9,7 +9,6 @@ import {
   TrendingUp,
   PanelLeftClose,
   PanelLeft,
-  Sparkles,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { ChatSession } from "@/lib/types";
@@ -104,16 +103,11 @@ export function ChatSidebar({
       {/* ─── Header ─── */}
       <div className="flex items-center justify-between px-4 py-4">
         <div className="flex items-center gap-2.5">
-          <div className="relative">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-700 shadow-lg shadow-blue-500/15 ring-1 ring-blue-400/15">
-              <TrendingUp className="h-4 w-4 text-white" />
-            </div>
-            <div className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-white shadow ring-1 ring-blue-100/50 dark:bg-slate-800 dark:ring-slate-700">
-              <Sparkles className="h-2 w-2 text-cyan-500" />
-            </div>
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-700 shadow-md">
+            <TrendingUp className="h-4 w-4 text-white" />
           </div>
-          <span className="font-serif text-[15px] font-semibold text-slate-800 dark:text-white tracking-tight">
-            <span className="italic">Tradvisor</span>AI
+          <span className="text-[15px] font-semibold text-slate-800 dark:text-white tracking-tight">
+            TradvisorAI
           </span>
         </div>
         <button
