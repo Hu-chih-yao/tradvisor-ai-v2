@@ -77,7 +77,7 @@ async function callResponsesAPI(
   config: ReturnType<typeof getConfig>,
   input: unknown[],
   previousResponseId?: string
-): Promise<APIResponse> {
+): Promise<{ response: APIResponse; usedPreviousId: boolean }> {
   const body: Record<string, unknown> = {
     model: config.model,
     tools: ALL_TOOLS,
@@ -99,10 +99,37 @@ async function callResponsesAPI(
 
   if (!res.ok) {
     const errorText = await res.text();
+
+    // If error is about image media_type (accumulated images in context),
+    // retry without previous_response_id to start fresh context
+    if (previousResponseId && errorText.includes("media_type")) {
+      console.warn("Retrying without previous_response_id due to image media_type error");
+      const retryBody: Record<string, unknown> = {
+        model: config.model,
+        tools: ALL_TOOLS,
+        input,
+      };
+      const retryRes = await fetch(`${config.baseUrl}/responses`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${config.apiKey}`,
+        },
+        body: JSON.stringify(retryBody),
+      });
+
+      if (!retryRes.ok) {
+        const retryErrorText = await retryRes.text();
+        throw new Error(`xAI API error (${retryRes.status}): ${retryErrorText}`);
+      }
+
+      return { response: (await retryRes.json()) as APIResponse, usedPreviousId: false };
+    }
+
     throw new Error(`xAI API error (${res.status}): ${errorText}`);
   }
 
-  return (await res.json()) as APIResponse;
+  return { response: (await res.json()) as APIResponse, usedPreviousId: !!previousResponseId };
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -125,14 +152,18 @@ export async function* runAgent(
   let responseId: string | undefined;
   let fullResponseText = "";
 
-  // Build input messages
+  // Build input messages — ensure all content is plain text strings
+  // to avoid sending malformed image blocks without media_type
+  const sanitizedHistory = history
+    .filter((msg) => msg.content && typeof msg.content === "string")
+    .map((msg) => ({
+      role: msg.role,
+      content: typeof msg.content === "string" ? msg.content : String(msg.content),
+    }));
+
   const inputMessages: unknown[] = [
     { role: "system", content: SYSTEM_PROMPT },
-    // Include conversation history for context
-    ...history.map((msg) => ({
-      role: msg.role,
-      content: msg.content,
-    })),
+    ...sanitizedHistory,
     { role: "user", content: userQuery },
   ];
 
@@ -140,7 +171,8 @@ export async function* runAgent(
     // ── Call the Responses API ──────────────────────
     let response: APIResponse;
     try {
-      response = await callResponsesAPI(config, inputMessages, responseId);
+      const result = await callResponsesAPI(config, inputMessages, responseId);
+      response = result.response;
       responseId = response.id;
     } catch (err) {
       yield {

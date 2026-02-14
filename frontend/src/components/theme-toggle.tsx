@@ -12,14 +12,14 @@ export function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <div className="h-8 w-8 rounded-lg bg-blue-50/40 dark:bg-slate-800/30 animate-pulse" />
+      <div className="h-8 w-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 animate-pulse" />
     );
   }
 
   return (
     <button
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-      className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-all duration-200 hover:bg-blue-50/50 hover:text-slate-600 hover:scale-105 active:scale-95 dark:hover:bg-slate-800/40 dark:hover:text-slate-300"
+      className="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-600 active:scale-95 dark:hover:bg-neutral-800 dark:hover:text-neutral-300"
       title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
     >
       {theme === "dark" ? (
