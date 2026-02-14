@@ -22,7 +22,7 @@ import { ALL_TOOLS, executeFunction, type PlanData } from "./tools.ts";
 // ═══════════════════════════════════════════════════════════════
 
 export interface SSEEvent {
-  type: "plan_update" | "tool_call" | "text_delta" | "done" | "error";
+  type: "plan_update" | "tool_call" | "step_activity" | "text_delta" | "done" | "error";
   data: Record<string, unknown>;
 }
 
@@ -53,6 +53,13 @@ interface ResponseItem {
   // web_search_call fields
   id?: string;
   status?: string;
+  query?: string;
+  results?: Array<{ title?: string; url?: string; snippet?: string }>;
+  // code_interpreter_call fields
+  code?: string;
+  language?: string;
+  output?: string;
+  error?: string;
   // function_call fields
   name?: string;
   arguments?: string;
@@ -157,6 +164,32 @@ export async function* runAgent(
           type: "tool_call",
           data: { name: "web_search", description: "Searching the web..." },
         };
+
+        // Emit search query as activity
+        if (item.query) {
+          yield {
+            type: "step_activity",
+            data: {
+              activity_type: "search",
+              content: item.query,
+              metadata: { search_query: item.query }
+            }
+          };
+        }
+
+        // Emit search results as activities
+        if (item.results && item.results.length > 0) {
+          const summary = item.results.slice(0, 3).map(r => r.title || r.snippet).filter(Boolean).join(", ");
+          if (summary) {
+            yield {
+              type: "step_activity",
+              data: {
+                activity_type: "info",
+                content: `Found: ${summary.substring(0, 150)}${summary.length > 150 ? "..." : ""}`
+              }
+            };
+          }
+        }
       }
 
       // --- Built-in: code interpreter executed server-side ---
@@ -168,6 +201,40 @@ export async function* runAgent(
             description: "Executing Python code...",
           },
         };
+
+        // Emit code as activity
+        if (item.code) {
+          yield {
+            type: "step_activity",
+            data: {
+              activity_type: "code",
+              content: item.code,
+              metadata: { language: item.language || "python" }
+            }
+          };
+        }
+
+        // Emit output as activity
+        if (item.output) {
+          yield {
+            type: "step_activity",
+            data: {
+              activity_type: "output",
+              content: item.output.substring(0, 300) // Limit output length
+            }
+          };
+        }
+
+        // Emit error as activity
+        if (item.error) {
+          yield {
+            type: "step_activity",
+            data: {
+              activity_type: "info",
+              content: `⚠️ Error: ${item.error}`
+            }
+          };
+        }
       }
 
       // --- Custom function call (update_plan) ---

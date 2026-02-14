@@ -32,6 +32,20 @@ export interface PlanStep {
   description: string;
   status: "pending" | "in_progress" | "completed" | "skipped";
   result?: string;
+  // Cursor-style detailed activity logs
+  activities?: StepActivity[];
+}
+
+export interface StepActivity {
+  type: "code" | "search" | "output" | "info";
+  content: string;
+  timestamp?: number;
+  metadata?: {
+    language?: string; // for code blocks
+    search_query?: string; // for search results
+    url?: string; // for citations
+    [key: string]: unknown;
+  };
 }
 
 export interface PlanUpdateEvent {

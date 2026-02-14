@@ -32,13 +32,13 @@ export function MessageBubble({ message }: MessageBubbleProps) {
       {/* Content */}
       <div
         className={cn(
-          "max-w-[82%] space-y-2.5",
+          "max-w-[85%] md:max-w-[82%] space-y-2.5 min-w-0",
           isUser ? "items-end" : "items-start"
         )}
       >
         {/* User message — dark slate pill */}
         {isUser && (
-          <div className="rounded-2xl rounded-tr-md bg-slate-800 px-4 py-2.5 text-[14px] leading-relaxed text-white shadow-md shadow-slate-900/8 dark:bg-slate-100 dark:text-slate-900 dark:shadow-none">
+          <div className="rounded-2xl rounded-tr-md bg-slate-800 px-4 py-2.5 text-[14px] leading-relaxed text-white shadow-md shadow-slate-900/8 dark:bg-slate-100 dark:text-slate-900 dark:shadow-none break-words overflow-wrap-anywhere">
             {message.content}
           </div>
         )}
@@ -68,7 +68,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
 
             {/* Markdown content — institutional typography */}
             {message.content && (
-              <div className="prose prose-sm prose-slate max-w-none dark:prose-invert prose-headings:font-serif prose-headings:tracking-tight prose-headings:font-semibold prose-headings:text-slate-800 dark:prose-headings:text-slate-100 prose-p:text-slate-600 prose-p:leading-relaxed prose-p:text-[14px] dark:prose-p:text-slate-300 prose-strong:text-slate-800 dark:prose-strong:text-slate-100 prose-code:text-cyan-600 prose-code:font-medium prose-code:text-[13px] dark:prose-code:text-cyan-400 prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline dark:prose-a:text-blue-400 prose-table:text-sm prose-li:text-slate-600 prose-li:text-[14px] dark:prose-li:text-slate-300 prose-hr:border-slate-200/50 dark:prose-hr:border-slate-700/30 prose-blockquote:border-blue-300/60 prose-blockquote:text-slate-500 dark:prose-blockquote:border-blue-700/50 dark:prose-blockquote:text-slate-400 prose-th:text-slate-700 dark:prose-th:text-slate-200 prose-td:text-slate-600 dark:prose-td:text-slate-300">
+              <div className="prose prose-sm prose-slate max-w-none dark:prose-invert prose-headings:font-serif prose-headings:tracking-tight prose-headings:font-semibold prose-headings:text-slate-800 dark:prose-headings:text-slate-100 prose-p:text-slate-600 prose-p:leading-relaxed prose-p:text-[14px] prose-p:break-words dark:prose-p:text-slate-300 prose-strong:text-slate-800 dark:prose-strong:text-slate-100 prose-code:text-cyan-600 prose-code:font-medium prose-code:text-[13px] prose-code:break-words dark:prose-code:text-cyan-400 prose-a:text-blue-600 prose-a:no-underline prose-a:break-all hover:prose-a:underline dark:prose-a:text-blue-400 prose-table:text-sm prose-table:overflow-x-auto prose-li:text-slate-600 prose-li:text-[14px] prose-li:break-words dark:prose-li:text-slate-300 prose-hr:border-slate-200/50 dark:prose-hr:border-slate-700/30 prose-blockquote:border-blue-300/60 prose-blockquote:text-slate-500 dark:prose-blockquote:border-blue-700/50 dark:prose-blockquote:text-slate-400 prose-th:text-slate-700 dark:prose-th:text-slate-200 prose-td:text-slate-600 dark:prose-td:text-slate-300 prose-pre:overflow-x-auto prose-pre:max-w-full overflow-hidden">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {message.content}
                 </ReactMarkdown>

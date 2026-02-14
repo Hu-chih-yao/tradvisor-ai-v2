@@ -445,12 +445,12 @@
 }
 
 /* ═══ Prose / Markdown table styles ═══ */
-.prose table { @apply w-full border-collapse text-sm; }
+.prose table { @apply w-full border-collapse text-sm overflow-x-auto block; }
 .prose th { @apply border border-slate-200 bg-slate-50 px-3 py-2 text-left font-medium dark:border-slate-700 dark:bg-slate-800; }
 .prose td { @apply border border-slate-200 px-3 py-2 dark:border-slate-700; }
-.prose pre { @apply rounded-xl bg-slate-950 p-4 text-sm dark:bg-slate-800; }
-.prose code { @apply rounded-md bg-cyan-50 px-1.5 py-0.5 text-sm text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300; }
-.prose pre code { @apply bg-transparent p-0 text-slate-200; }
+.prose pre { @apply rounded-xl bg-slate-950 p-4 text-sm dark:bg-slate-800 overflow-x-auto max-w-full; }
+.prose code { @apply rounded-md bg-cyan-50 px-1.5 py-0.5 text-sm text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300 break-words; }
+.prose pre code { @apply bg-transparent p-0 text-slate-200 break-normal; }
 
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }

@@ -195,6 +195,52 @@ export function useChat(options?: UseChatOptions) {
                     break;
                   }
 
+                  case "step_activity": {
+                    // Add activity to the currently in-progress step
+                    setCurrentPlan((prev) => {
+                      if (!prev) return prev;
+                      const updated = { ...prev };
+                      const inProgressStep = updated.steps.find(
+                        (s) => s.status === "in_progress"
+                      );
+                      if (inProgressStep) {
+                        if (!inProgressStep.activities) {
+                          inProgressStep.activities = [];
+                        }
+                        inProgressStep.activities.push({
+                          type: data.activity_type as "code" | "search" | "output" | "info",
+                          content: data.content as string,
+                          timestamp: Date.now(),
+                          metadata: data.metadata as Record<string, unknown> | undefined,
+                        });
+                      }
+                      return updated;
+                    });
+                    // Also update in messages
+                    setMessages((prev) => {
+                      const updated = [...prev];
+                      const last = updated[updated.length - 1];
+                      if (last.role === "assistant" && last.plan) {
+                        const inProgressStep = last.plan.steps.find(
+                          (s) => s.status === "in_progress"
+                        );
+                        if (inProgressStep) {
+                          if (!inProgressStep.activities) {
+                            inProgressStep.activities = [];
+                          }
+                          inProgressStep.activities.push({
+                            type: data.activity_type as "code" | "search" | "output" | "info",
+                            content: data.content as string,
+                            timestamp: Date.now(),
+                            metadata: data.metadata as Record<string, unknown> | undefined,
+                          });
+                        }
+                      }
+                      return updated;
+                    });
+                    break;
+                  }
+
                   case "text_delta": {
                     accumulatedText += data.content || "";
                     setMessages((prev) => {
