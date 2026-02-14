@@ -149,7 +149,7 @@ function StepItem({ step }: { step: PlanStep }) {
       {/* Cursor-style activities */}
       {hasActivities && (isExpanded || step.status === "in_progress") && (
         <div className="mt-2 space-y-1 animate-fadeIn">
-          {step.activities.map((activity, idx) => (
+          {step.activities?.map((activity, idx) => (
             <ActivityItem key={idx} activity={activity} />
           ))}
         </div>
