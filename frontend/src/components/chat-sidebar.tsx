@@ -18,6 +18,8 @@ interface ChatSidebarProps {
   onSelectSession: (id: string) => void;
   onNewChat: () => void;
   refreshTrigger?: number;
+  /** When true, always show expanded (used for mobile overlay) */
+  forceExpanded?: boolean;
 }
 
 export function ChatSidebar({
@@ -25,6 +27,7 @@ export function ChatSidebar({
   onSelectSession,
   onNewChat,
   refreshTrigger,
+  forceExpanded,
 }: ChatSidebarProps) {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [collapsed, setCollapsed] = useState(true);
@@ -67,8 +70,10 @@ export function ChatSidebar({
     window.location.href = "/login";
   }
 
-  /* ─── Collapsed state ─── */
-  if (collapsed) {
+  const isExpanded = forceExpanded || !collapsed;
+
+  /* ─── Collapsed state (desktop only, never shown when forceExpanded) ─── */
+  if (!isExpanded) {
     return (
       <div className="hidden lg:flex w-14 flex-col items-center border-r border-neutral-200/60 bg-neutral-50 py-3.5 dark:border-neutral-800 dark:bg-neutral-950">
         <button
@@ -93,19 +98,26 @@ export function ChatSidebar({
   }
 
   return (
-    <div className="hidden lg:flex w-[17rem] flex-col border-r border-neutral-200/60 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-950">
+    <div
+      className={cn(
+        "flex w-[17rem] flex-col border-r border-neutral-200/60 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-950 h-full",
+        forceExpanded ? "" : "hidden lg:flex"
+      )}
+    >
       {/* ─── Header ─── */}
       <div className="flex items-center justify-between px-4 py-4">
         <span className="text-[15px] font-semibold text-neutral-800 dark:text-neutral-100 tracking-tight">
           TradvisorAI
         </span>
-        <button
-          onClick={() => setCollapsed(true)}
-          className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 dark:hover:bg-neutral-800 dark:hover:text-neutral-300 transition-colors"
-          title="Collapse sidebar"
-        >
-          <PanelLeftClose className="h-4 w-4" />
-        </button>
+        {!forceExpanded && (
+          <button
+            onClick={() => setCollapsed(true)}
+            className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 dark:hover:bg-neutral-800 dark:hover:text-neutral-300 transition-colors"
+            title="Collapse sidebar"
+          >
+            <PanelLeftClose className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       {/* Divider */}
