@@ -17,6 +17,7 @@ Architecture:
 """
 
 import json
+import time
 from dataclasses import dataclass, field
 from typing import Generator
 
@@ -45,6 +46,7 @@ class ToolCall:
     """Agent is calling a tool (built-in or custom)."""
     name: str
     description: str = ""
+    timestamp: float = 0.0  # Time when tool was called
 
 
 @dataclass
@@ -58,6 +60,7 @@ class Done:
     """Agent finished."""
     iterations: int
     plan: dict | None
+    timestamp: float = 0.0
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -115,7 +118,7 @@ class TradvisorAgent:
 
             except Exception as e:
                 yield TextDelta(f"\n\nAPI Error: {e}")
-                yield Done(iterations=iteration, plan=self.plan)
+                yield Done(iterations=iteration, plan=self.plan, timestamp=time.time())
                 return
 
             # ── Parse output items ──────────────────────────
@@ -126,11 +129,11 @@ class TradvisorAgent:
 
                 # --- Built-in: web search executed server-side ---
                 if item_type == "web_search_call":
-                    yield ToolCall(name="web_search", description="Searching the web...")
+                    yield ToolCall(name="web_search", description="Searching the web...", timestamp=time.time())
 
                 # --- Built-in: code interpreter executed server-side ---
                 elif item_type == "code_interpreter_call":
-                    yield ToolCall(name="code_execution", description="Executing Python code...")
+                    yield ToolCall(name="code_execution", description="Executing Python code...", timestamp=time.time())
 
                 # --- Custom function call (update_plan) ---
                 elif item_type == "function_call":
@@ -143,7 +146,7 @@ class TradvisorAgent:
                     except json.JSONDecodeError:
                         args_dict = {}
 
-                    yield ToolCall(name=name, description=args_dict.get("task_summary", ""))
+                    yield ToolCall(name=name, description=args_dict.get("task_summary", ""), timestamp=time.time())
 
                     # Track plan state
                     if name == "update_plan":
@@ -173,7 +176,7 @@ class TradvisorAgent:
             # ── Decide whether to continue ──────────────────
             if not function_call_outputs:
                 # No custom function calls → model is done
-                yield Done(iterations=iteration, plan=self.plan)
+                yield Done(iterations=iteration, plan=self.plan, timestamp=time.time())
                 return
 
             # Send function results back and continue the loop
@@ -181,7 +184,7 @@ class TradvisorAgent:
 
         # Max iterations
         yield TextDelta("\n\n(Reached maximum iterations.)")
-        yield Done(iterations=MAX_ITERATIONS, plan=self.plan)
+        yield Done(iterations=MAX_ITERATIONS, plan=self.plan, timestamp=time.time())
 
 
 def run_agent(query: str) -> Generator:

@@ -46,6 +46,10 @@ UPDATE_PLAN_TOOL = {
                     "properties": {
                         "id": {"type": "integer"},
                         "description": {"type": "string"},
+                        "activeForm": {
+                            "type": "string",
+                            "description": "Present continuous form for in-progress display (e.g., 'Searching for data')",
+                        },
                         "status": {
                             "type": "string",
                             "enum": [

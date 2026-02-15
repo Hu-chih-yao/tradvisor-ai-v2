@@ -78,12 +78,19 @@ def render_plan(plan_data: dict):
     for step in plan_data.get("steps", []):
         status = step.get("status", "pending")
         icon, style = STATUS_ICONS.get(status, ("[dim][ ][/dim]", "dim"))
+
+        # Use activeForm for in_progress, description otherwise
+        if status == "in_progress" and step.get("activeForm"):
+            step_text = step.get("activeForm")
+        else:
+            step_text = step.get("description", "")
+
         result = step.get("result", "") or ""
         if len(result) > 60:
             result = result[:57] + "..."
         table.add_row(
             icon,
-            f"[{style}]{step.get('description', '')}[/{style}]",
+            f"[{style}]{step_text}[/{style}]",
             f"[dim]{result}[/dim]",
         )
 
@@ -91,21 +98,27 @@ def render_plan(plan_data: dict):
     console.print(table)
 
 
-def render_tool_call(event: ToolCall):
-    """Render a tool call indicator."""
+def render_tool_call(event: ToolCall, last_event_time: float = None):
+    """Render a tool call indicator with elapsed time."""
+    elapsed = ""
+    if last_event_time and event.timestamp:
+        delta = event.timestamp - last_event_time
+        if delta > 1:  # Only show if > 1 second
+            elapsed = f" [dim](+{delta:.1f}s)[/dim]"
+
     if event.name == "web_search":
         console.print(
-            f"  [bold yellow]>> Web Search[/bold yellow] [dim](server-side)[/dim]"
+            f"  [bold yellow]>> Web Search[/bold yellow] [dim](server-side)[/dim]{elapsed}"
         )
     elif event.name == "code_execution":
         console.print(
-            f"  [bold magenta]>> Code Execution[/bold magenta] [dim](server-side)[/dim]"
+            f"  [bold magenta]>> Code Execution[/bold magenta] [dim](server-side)[/dim]{elapsed}"
         )
     elif event.name == "update_plan":
         pass  # Plan is rendered separately
     else:
         console.print(
-            f"  [bold]>> {event.name}[/bold]: {event.description}"
+            f"  [bold]>> {event.name}[/bold]: {event.description}{elapsed}"
         )
 
 
@@ -129,6 +142,8 @@ def run_query(query: str):
     """Run a single query through the agent and display results."""
     agent = TradvisorAgent()
     collected_text = ""
+    last_event_time = None
+    start_time = None
 
     console.print()
     console.print("[bold blue]Agent working...[/bold blue]")
@@ -142,7 +157,10 @@ def run_query(query: str):
             })
 
         elif isinstance(event, ToolCall):
-            render_tool_call(event)
+            if start_time is None:
+                start_time = event.timestamp
+            render_tool_call(event, last_event_time)
+            last_event_time = event.timestamp
 
         elif isinstance(event, TextDelta):
             collected_text += event.content
@@ -151,8 +169,9 @@ def run_query(query: str):
             if collected_text:
                 render_final_response(collected_text)
             console.print()
+            total_time = f" in {event.timestamp - start_time:.1f}s" if start_time and hasattr(event, 'timestamp') else ""
             console.print(
-                f"[dim]Completed in {event.iterations} iteration(s)[/dim]"
+                f"[dim]Completed in {event.iterations} iteration(s){total_time}[/dim]"
             )
 
 
