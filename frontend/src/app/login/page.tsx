@@ -69,10 +69,10 @@ export default function LoginPage() {
       <div className="fixed inset-0 z-0 gradient-landing" />
 
       {/* Navigation */}
-      <nav className="fixed top-0 w-full z-50 flex justify-between items-center px-6 py-6 md:px-12">
+      <nav className="fixed top-0 w-full z-50 flex justify-between items-center px-6 py-6 md:px-12 backdrop-blur-sm">
         <Link
           href="/"
-          className="text-xs font-bold tracking-[0.3em] uppercase text-neutral-800/80 dark:text-neutral-200/80 hover:text-neutral-900 dark:hover:text-white transition-colors"
+          className="text-xs font-bold tracking-[0.3em] uppercase text-neutral-800 dark:text-white hover:text-neutral-900 dark:hover:text-white transition-colors"
         >
           TradvisorAI
         </Link>

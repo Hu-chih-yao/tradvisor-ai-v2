@@ -106,7 +106,7 @@ export function ChatSidebar({
     >
       {/* ─── Header ─── */}
       <div className="flex items-center justify-between px-4 py-4">
-        <span className="text-[15px] font-semibold text-neutral-800 dark:text-neutral-100 tracking-tight">
+        <span className="text-[15px] font-semibold text-neutral-800 dark:text-white tracking-tight">
           TradvisorAI
         </span>
         {!forceExpanded && (

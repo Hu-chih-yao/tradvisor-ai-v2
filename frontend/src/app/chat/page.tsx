@@ -86,7 +86,7 @@ export default function ChatPage() {
             >
               <Menu className="h-5 w-5" />
             </button>
-            <span className="text-[15px] font-semibold text-neutral-800 dark:text-neutral-100 tracking-tight lg:text-sm lg:font-medium lg:text-neutral-500 lg:dark:text-neutral-400">
+            <span className="text-[15px] font-semibold text-neutral-800 dark:text-white tracking-tight lg:text-sm lg:font-medium lg:text-neutral-600 lg:dark:text-neutral-200">
               TradvisorAI
             </span>
           </div>

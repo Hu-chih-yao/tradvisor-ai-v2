@@ -9,8 +9,8 @@ export default function LandingPage() {
       <div className="fixed inset-0 z-0 gradient-landing" />
 
       {/* Navigation */}
-      <nav className="fixed top-0 w-full z-50 flex justify-between items-center px-6 py-6 md:px-12">
-        <div className="text-xs font-bold tracking-[0.3em] uppercase text-neutral-800/80 dark:text-neutral-200/80">
+      <nav className="fixed top-0 w-full z-50 flex justify-between items-center px-6 py-6 md:px-12 backdrop-blur-sm">
+        <div className="text-xs font-bold tracking-[0.3em] uppercase text-neutral-800 dark:text-white">
           TradvisorAI
         </div>
         <div className="flex items-center gap-5">
