@@ -7,11 +7,6 @@ interface ToolIndicatorProps {
   toolCalls: ToolCallEvent[];
 }
 
-/*
-  Tool calls are presented as high-value analysis activities.
-  Server-side mechanics (web_search, code_execution) are abstracted
-  into professional language the user recognizes as institutional research.
-*/
 const TOOL_DISPLAY: Record<
   string,
   { icon: typeof Activity; label: string; color: string }
@@ -20,20 +15,19 @@ const TOOL_DISPLAY: Record<
     icon: Activity,
     label: "Gathering market intelligence",
     color:
-      "text-blue-600 bg-blue-50/50 border-blue-200/30 dark:bg-blue-900/12 dark:text-blue-400 dark:border-blue-800/20",
+      "text-neutral-600 bg-neutral-50 border-neutral-200/50 dark:bg-neutral-800 dark:text-neutral-400 dark:border-neutral-700",
   },
   code_execution: {
     icon: BarChart3,
     label: "Building financial models",
     color:
-      "text-cyan-600 bg-cyan-50/50 border-cyan-200/30 dark:bg-cyan-900/12 dark:text-cyan-400 dark:border-cyan-800/20",
+      "text-neutral-600 bg-neutral-50 border-neutral-200/50 dark:bg-neutral-800 dark:text-neutral-400 dark:border-neutral-700",
   },
 };
 
 export function ToolIndicator({ toolCalls }: ToolIndicatorProps) {
   if (toolCalls.length === 0) return null;
 
-  // Deduplicate consecutive same-type tool calls for cleaner UX
   const uniqueCalls = toolCalls.reduce<ToolCallEvent[]>((acc, tc) => {
     if (acc.length === 0 || acc[acc.length - 1].name !== tc.name) {
       acc.push(tc);
@@ -48,7 +42,7 @@ export function ToolIndicator({ toolCalls }: ToolIndicatorProps) {
           icon: Briefcase,
           label: "Processing data",
           color:
-            "text-slate-500 bg-slate-50/50 border-slate-200/30 dark:bg-slate-800/20 dark:border-slate-700/20",
+            "text-neutral-500 bg-neutral-50 border-neutral-200/50 dark:bg-neutral-800 dark:text-neutral-400 dark:border-neutral-700",
         };
         const Icon = config.icon;
 

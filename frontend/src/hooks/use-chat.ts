@@ -166,12 +166,12 @@ export function useChat(options?: UseChatOptions) {
                   case "plan_update": {
                     const plan = data as PlanUpdateEvent;
                     setCurrentPlan(plan);
-                    // Update assistant message with plan
+                    // Update assistant message with plan (immutable update)
                     setMessages((prev) => {
                       const updated = [...prev];
                       const last = updated[updated.length - 1];
                       if (last.role === "assistant") {
-                        last.plan = plan;
+                        updated[updated.length - 1] = { ...last, plan };
                       }
                       return updated;
                     });
@@ -187,11 +187,56 @@ export function useChat(options?: UseChatOptions) {
                         const updated = [...prev];
                         const last = updated[updated.length - 1];
                         if (last.role === "assistant") {
-                          last.toolCalls = [...accumulatedToolCalls];
+                          updated[updated.length - 1] = {
+                            ...last,
+                            toolCalls: [...accumulatedToolCalls],
+                          };
                         }
                         return updated;
                       });
                     }
+                    break;
+                  }
+
+                  case "step_activity": {
+                    const newActivity = {
+                      type: data.activity_type as "code" | "search" | "output" | "info",
+                      content: data.content as string,
+                      timestamp: Date.now(),
+                      metadata: data.metadata as Record<string, unknown> | undefined,
+                    };
+
+                    // Add activity to the currently in-progress step (immutable update)
+                    setCurrentPlan((prev) => {
+                      if (!prev) return prev;
+                      return {
+                        ...prev,
+                        steps: prev.steps.map((s) =>
+                          s.status === "in_progress"
+                            ? { ...s, activities: [...(s.activities || []), newActivity] }
+                            : s
+                        ),
+                      };
+                    });
+                    // Also update in messages (immutable update)
+                    setMessages((prev) => {
+                      const updated = [...prev];
+                      const last = updated[updated.length - 1];
+                      if (last.role === "assistant" && last.plan) {
+                        updated[updated.length - 1] = {
+                          ...last,
+                          plan: {
+                            ...last.plan,
+                            steps: last.plan.steps.map((s) =>
+                              s.status === "in_progress"
+                                ? { ...s, activities: [...(s.activities || []), newActivity] }
+                                : s
+                            ),
+                          },
+                        };
+                      }
+                      return updated;
+                    });
                     break;
                   }
 
@@ -201,7 +246,10 @@ export function useChat(options?: UseChatOptions) {
                       const updated = [...prev];
                       const last = updated[updated.length - 1];
                       if (last.role === "assistant") {
-                        last.content = accumulatedText;
+                        updated[updated.length - 1] = {
+                          ...last,
+                          content: accumulatedText,
+                        };
                       }
                       return updated;
                     });
@@ -213,7 +261,10 @@ export function useChat(options?: UseChatOptions) {
                       const updated = [...prev];
                       const last = updated[updated.length - 1];
                       if (last.role === "assistant") {
-                        last.isStreaming = false;
+                        updated[updated.length - 1] = {
+                          ...last,
+                          isStreaming: false,
+                        };
                       }
                       return updated;
                     });
@@ -225,9 +276,11 @@ export function useChat(options?: UseChatOptions) {
                       const updated = [...prev];
                       const last = updated[updated.length - 1];
                       if (last.role === "assistant") {
-                        last.content =
-                          `Error: ${data.message || "Something went wrong"}`;
-                        last.isStreaming = false;
+                        updated[updated.length - 1] = {
+                          ...last,
+                          content: `Error: ${data.message || "Something went wrong"}`,
+                          isStreaming: false,
+                        };
                       }
                       return updated;
                     });
@@ -249,8 +302,11 @@ export function useChat(options?: UseChatOptions) {
             const updated = [...prev];
             const last = updated[updated.length - 1];
             if (last?.role === "assistant") {
-              last.content = `Error: ${(err as Error).message}`;
-              last.isStreaming = false;
+              updated[updated.length - 1] = {
+                ...last,
+                content: `Error: ${(err as Error).message}`,
+                isStreaming: false,
+              };
             }
             return updated;
           });
@@ -273,7 +329,7 @@ export function useChat(options?: UseChatOptions) {
       const updated = [...prev];
       const last = updated[updated.length - 1];
       if (last?.role === "assistant") {
-        last.isStreaming = false;
+        updated[updated.length - 1] = { ...last, isStreaming: false };
       }
       return updated;
     });

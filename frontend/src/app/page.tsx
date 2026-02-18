@@ -1,100 +1,142 @@
-"use client";
-
-import { useState, useCallback } from "react";
-import { ChatSidebar } from "@/components/chat-sidebar";
-import { ChatMessages } from "@/components/chat-messages";
-import { ChatInput } from "@/components/chat-input";
+import Link from "next/link";
+import { ArrowRight, BarChart3, Search, Shield } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { useChat } from "@/hooks/use-chat";
-import { TrendingUp, Sparkles } from "lucide-react";
 
-export default function ChatPage() {
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [suggestionValue, setSuggestionValue] = useState<string | undefined>();
-
-  const handleSessionCreated = useCallback(() => {
-    setRefreshTrigger((prev) => prev + 1);
-  }, []);
-
-  const {
-    messages,
-    isLoading,
-    sessionId,
-    sendMessage,
-    loadSession,
-    newSession,
-    stop,
-  } = useChat({
-    onSessionCreated: handleSessionCreated,
-  });
-
-  function handleSuggestionClick(text: string) {
-    setSuggestionValue(text);
-  }
-
+export default function LandingPage() {
   return (
-    <div className="flex h-[100dvh] overflow-hidden bg-editorial">
-      {/* Sidebar */}
-      <ChatSidebar
-        currentSessionId={sessionId}
-        onSelectSession={loadSession}
-        onNewChat={newSession}
-        refreshTrigger={refreshTrigger}
-      />
+    <div className="min-h-screen bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 font-sans selection:bg-neutral-900/10 dark:selection:bg-white/15 overflow-hidden">
+      {/* Gradient background */}
+      <div className="fixed inset-0 z-0 gradient-landing" />
 
-      {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col min-w-0 h-full relative">
-        {/* Header — editorial glass bar */}
-        <header className="glass-bar h-14 px-5 flex items-center justify-between shrink-0 z-20">
-          {/* Mobile: Logo */}
-          <div className="flex items-center gap-2.5 lg:hidden">
-            <div className="relative">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-700 shadow-lg shadow-blue-500/20 ring-1 ring-blue-400/20">
-                <TrendingUp className="h-4 w-4 text-white" />
-              </div>
-              <div className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-white shadow ring-1 ring-slate-100 dark:bg-slate-800 dark:ring-slate-700">
-                <Sparkles className="h-2 w-2 text-cyan-500" />
-              </div>
-            </div>
-            <span className="font-serif text-[15px] font-semibold text-slate-800 dark:text-white tracking-tight">
-              <span className="italic">Tradvisor</span>AI
+      {/* Navigation */}
+      <nav className="fixed top-0 w-full z-50 flex justify-between items-center px-6 py-6 md:px-12 backdrop-blur-sm">
+        <div className="text-xs font-bold tracking-[0.3em] uppercase text-neutral-800 dark:text-white">
+          TradvisorAI
+        </div>
+        <div className="flex items-center gap-5">
+          <ThemeToggle />
+          <Link
+            href="/login"
+            className="text-[10px] font-bold uppercase text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 transition-colors tracking-[0.2em]"
+          >
+            Sign In
+          </Link>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-6">
+        <div className="text-center space-y-6 max-w-3xl">
+          {/* Label */}
+          <span className="text-[10px] font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-[0.3em] animate-heroFadeIn">
+            AI-Powered Equity Research
+          </span>
+
+          {/* Main Title — Large serif like the Muse AI style */}
+          <h1 className="font-serif text-6xl md:text-8xl text-neutral-900 dark:text-neutral-100 tracking-tighter animate-heroFadeIn">
+            <span className="block font-light italic">
+              Tradvisor
             </span>
-          </div>
+            <span className="block font-normal mt-[-0.1em]">
+              AI
+            </span>
+          </h1>
 
-          {/* Desktop: Editorial label + live indicator */}
-          <div className="hidden lg:flex items-center gap-4">
-            <p className="editorial-label">AI Equity Research</p>
-            <div className="badge-live">Live</div>
-          </div>
+          {/* Divider */}
+          <div className="h-[1px] w-16 bg-neutral-400/40 dark:bg-neutral-500/40 mx-auto my-6 animate-heroFadeInDelay" />
 
-          {/* Right: Theme toggle */}
-          <div className="flex items-center gap-3">
-            <ThemeToggle />
-          </div>
-        </header>
+          {/* Subtitle */}
+          <p className="text-xs md:text-sm font-medium uppercase text-neutral-600/70 dark:text-neutral-400/70 tracking-[0.3em] animate-heroFadeInDelay">
+            Institutional Research for Everyone
+          </p>
 
-        {/* Messages Area — scrollable with bottom padding for input */}
-        <main className="flex-1 overflow-y-auto scrollbar-thin pb-[140px] md:pb-32">
-          <ChatMessages
-            messages={messages}
-            onSuggestionClick={handleSuggestionClick}
-          />
-        </main>
+          {/* Description */}
+          <p className="text-sm md:text-base text-neutral-500 dark:text-neutral-400 max-w-md mx-auto leading-relaxed animate-heroFadeInDelay2">
+            Type any stock ticker. Get DCF valuations, moat analysis, and investment
+            insights in seconds — powered by AI that thinks like a Wall Street analyst.
+          </p>
 
-        {/* Input Area — anchored to bottom */}
-        <footer className="absolute bottom-0 left-0 right-0 p-3 md:p-5 pb-[max(12px,env(safe-area-inset-bottom))] md:pb-5 z-30 pointer-events-none">
-          <div className="absolute inset-0 bg-gradient-to-t from-[#f2f5f8] via-[#f2f5f8]/95 to-[#f2f5f8]/0 dark:from-[#0c1322] dark:via-[#0c1322]/95 dark:to-[#0c1322]/0" />
-          <div className="relative pointer-events-auto">
-            <ChatInput
-              onSend={sendMessage}
-              onStop={stop}
-              isLoading={isLoading}
-              externalValue={suggestionValue}
-              onExternalValueConsumed={() => setSuggestionValue(undefined)}
-            />
+          {/* CTA Button */}
+          <div className="pt-8 animate-heroFadeInDelay3">
+            <Link
+              href="/login"
+              className="group relative inline-flex items-center gap-2 px-10 py-4 overflow-hidden rounded-full bg-neutral-900 text-white shadow-2xl hover:shadow-xl transition-all duration-500 dark:bg-white dark:text-neutral-900"
+            >
+              <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-neutral-800 to-black opacity-0 group-hover:opacity-100 transition-opacity duration-500 dark:from-neutral-100 dark:to-white" />
+              <span className="relative z-10 text-[11px] font-bold uppercase tracking-[0.25em] group-hover:tracking-[0.35em] transition-all duration-500">
+                Begin Research
+              </span>
+              <ArrowRight className="relative z-10 w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
+            </Link>
           </div>
-        </footer>
+        </div>
       </div>
+
+      {/* Features Section */}
+      <div className="relative z-10 pb-32 px-6">
+        <div className="max-w-4xl mx-auto">
+          {/* Section label */}
+          <div className="text-center mb-16">
+            <span className="text-[10px] font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-[0.3em]">
+              How It Works
+            </span>
+            <div className="h-[1px] w-10 bg-neutral-300/60 dark:bg-neutral-600/60 mx-auto mt-4" />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8">
+            {[
+              {
+                icon: Search,
+                step: "01",
+                title: "Ask",
+                description:
+                  "Type any stock ticker or investment question. Our AI agent begins autonomous research immediately.",
+              },
+              {
+                icon: BarChart3,
+                step: "02",
+                title: "Analyze",
+                description:
+                  "Real-time web search, financial data extraction, and DCF modeling — all performed by the AI in seconds.",
+              },
+              {
+                icon: Shield,
+                step: "03",
+                title: "Decide",
+                description:
+                  "Receive a comprehensive research report with fair value estimates, risk analysis, and actionable insights.",
+              },
+            ].map((feature) => (
+              <div key={feature.step} className="text-center space-y-4">
+                <div className="flex items-center justify-center">
+                  <feature.icon className="h-6 w-6 text-neutral-400 dark:text-neutral-500" strokeWidth={1.5} />
+                </div>
+                <span className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-[0.2em]">
+                  Step {feature.step}
+                </span>
+                <h3 className="font-serif text-2xl md:text-3xl tracking-tight text-neutral-800 dark:text-neutral-200 italic">
+                  {feature.title}
+                </h3>
+                <p className="text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed max-w-xs mx-auto">
+                  {feature.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <footer className="relative z-10 border-t border-neutral-200/40 dark:border-neutral-800/40 py-8 px-6">
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <span className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-[0.2em]">
+            TradvisorAI
+          </span>
+          <span className="text-[10px] text-neutral-400/60 dark:text-neutral-500/50 tracking-wider">
+            AI analysis, not financial advice
+          </span>
+        </div>
+      </footer>
     </div>
   );
 }

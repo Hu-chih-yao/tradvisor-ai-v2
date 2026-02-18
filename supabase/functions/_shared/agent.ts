@@ -22,7 +22,7 @@ import { ALL_TOOLS, executeFunction, type PlanData } from "./tools.ts";
 // ═══════════════════════════════════════════════════════════════
 
 export interface SSEEvent {
-  type: "plan_update" | "tool_call" | "text_delta" | "done" | "error";
+  type: "plan_update" | "tool_call" | "step_activity" | "text_delta" | "done" | "error";
   data: Record<string, unknown>;
 }
 
@@ -40,7 +40,7 @@ function getConfig() {
   return {
     apiKey,
     baseUrl: Deno.env.get("XAI_BASE_URL") || "https://api.x.ai/v1",
-    model: Deno.env.get("XAI_MODEL") || "grok-4-1-fast-reasoning",
+    model: Deno.env.get("XAI_MODEL") || "grok-3-mini",
   };
 }
 
@@ -53,6 +53,13 @@ interface ResponseItem {
   // web_search_call fields
   id?: string;
   status?: string;
+  query?: string;
+  results?: Array<{ title?: string; url?: string; snippet?: string }>;
+  // code_interpreter_call fields
+  code?: string;
+  language?: string;
+  output?: string;
+  error?: string;
   // function_call fields
   name?: string;
   arguments?: string;
@@ -70,7 +77,7 @@ async function callResponsesAPI(
   config: ReturnType<typeof getConfig>,
   input: unknown[],
   previousResponseId?: string
-): Promise<APIResponse> {
+): Promise<{ response: APIResponse; usedPreviousId: boolean }> {
   const body: Record<string, unknown> = {
     model: config.model,
     tools: ALL_TOOLS,
@@ -92,10 +99,37 @@ async function callResponsesAPI(
 
   if (!res.ok) {
     const errorText = await res.text();
+
+    // If error is about image media_type (accumulated images in context),
+    // retry without previous_response_id to start fresh context
+    if (previousResponseId && errorText.includes("media_type")) {
+      console.warn("Retrying without previous_response_id due to image media_type error");
+      const retryBody: Record<string, unknown> = {
+        model: config.model,
+        tools: ALL_TOOLS,
+        input,
+      };
+      const retryRes = await fetch(`${config.baseUrl}/responses`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${config.apiKey}`,
+        },
+        body: JSON.stringify(retryBody),
+      });
+
+      if (!retryRes.ok) {
+        const retryErrorText = await retryRes.text();
+        throw new Error(`xAI API error (${retryRes.status}): ${retryErrorText}`);
+      }
+
+      return { response: (await retryRes.json()) as APIResponse, usedPreviousId: false };
+    }
+
     throw new Error(`xAI API error (${res.status}): ${errorText}`);
   }
 
-  return (await res.json()) as APIResponse;
+  return { response: (await res.json()) as APIResponse, usedPreviousId: !!previousResponseId };
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -118,14 +152,18 @@ export async function* runAgent(
   let responseId: string | undefined;
   let fullResponseText = "";
 
-  // Build input messages
+  // Build input messages — ensure all content is plain text strings
+  // to avoid sending malformed image blocks without media_type
+  const sanitizedHistory = history
+    .filter((msg) => msg.content && typeof msg.content === "string")
+    .map((msg) => ({
+      role: msg.role,
+      content: typeof msg.content === "string" ? msg.content : String(msg.content),
+    }));
+
   const inputMessages: unknown[] = [
     { role: "system", content: SYSTEM_PROMPT },
-    // Include conversation history for context
-    ...history.map((msg) => ({
-      role: msg.role,
-      content: msg.content,
-    })),
+    ...sanitizedHistory,
     { role: "user", content: userQuery },
   ];
 
@@ -133,7 +171,8 @@ export async function* runAgent(
     // ── Call the Responses API ──────────────────────
     let response: APIResponse;
     try {
-      response = await callResponsesAPI(config, inputMessages, responseId);
+      const result = await callResponsesAPI(config, inputMessages, responseId);
+      response = result.response;
       responseId = response.id;
     } catch (err) {
       yield {
@@ -157,6 +196,32 @@ export async function* runAgent(
           type: "tool_call",
           data: { name: "web_search", description: "Searching the web..." },
         };
+
+        // Emit search query as activity
+        if (item.query) {
+          yield {
+            type: "step_activity",
+            data: {
+              activity_type: "search",
+              content: item.query,
+              metadata: { search_query: item.query }
+            }
+          };
+        }
+
+        // Emit search results as activities
+        if (item.results && item.results.length > 0) {
+          const summary = item.results.slice(0, 3).map(r => r.title || r.snippet).filter(Boolean).join(", ");
+          if (summary) {
+            yield {
+              type: "step_activity",
+              data: {
+                activity_type: "info",
+                content: `Found: ${summary.substring(0, 150)}${summary.length > 150 ? "..." : ""}`
+              }
+            };
+          }
+        }
       }
 
       // --- Built-in: code interpreter executed server-side ---
@@ -168,6 +233,40 @@ export async function* runAgent(
             description: "Executing Python code...",
           },
         };
+
+        // Emit code as activity
+        if (item.code) {
+          yield {
+            type: "step_activity",
+            data: {
+              activity_type: "code",
+              content: item.code,
+              metadata: { language: item.language || "python" }
+            }
+          };
+        }
+
+        // Emit output as activity
+        if (item.output) {
+          yield {
+            type: "step_activity",
+            data: {
+              activity_type: "output",
+              content: item.output.substring(0, 300) // Limit output length
+            }
+          };
+        }
+
+        // Emit error as activity
+        if (item.error) {
+          yield {
+            type: "step_activity",
+            data: {
+              activity_type: "info",
+              content: `⚠️ Error: ${item.error}`
+            }
+          };
+        }
       }
 
       // --- Custom function call (update_plan) ---
