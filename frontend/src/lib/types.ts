@@ -74,6 +74,22 @@ export interface ErrorEvent {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// LIVE EVENT FEED (like demo.py >> Web Search >> Code Execution)
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * One entry in the live event feed shown below the plan checklist.
+ * Each tool call (web_search, code_execution) starts a new LiveEvent block.
+ * Subsequent step_activity events attach as details inside that block.
+ */
+export interface LiveEvent {
+  id: string;
+  tool: "web_search" | "code_execution" | string;
+  description: string; // actual search query or first code line
+  details: StepActivity[]; // results, output, info that follow
+}
+
+// ═══════════════════════════════════════════════════════════════
 // UI STATE TYPES
 // ═══════════════════════════════════════════════════════════════
 
@@ -82,6 +98,7 @@ export interface UIMessage {
   role: "user" | "assistant";
   content: string;
   plan?: PlanUpdateEvent;
+  liveEvents?: LiveEvent[]; // inline event stream (replaces toolCalls + nested activities)
   toolCalls?: ToolCallEvent[];
   isStreaming?: boolean;
 }

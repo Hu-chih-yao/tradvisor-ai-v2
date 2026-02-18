@@ -30,7 +30,7 @@ export interface SSEEvent {
 // AGENT CONFIGURATION
 // ═══════════════════════════════════════════════════════════════
 
-const MAX_ITERATIONS = 15;
+const MAX_ITERATIONS = 20;
 
 function getConfig() {
   const apiKey = Deno.env.get("XAI_API_KEY");
@@ -194,7 +194,7 @@ export async function* runAgent(
       if (item.type === "web_search_call") {
         yield {
           type: "tool_call",
-          data: { name: "web_search", description: "Searching the web..." },
+          data: { name: "web_search", description: item.query || "Searching the web..." },
         };
 
         // Emit search query as activity
@@ -230,7 +230,9 @@ export async function* runAgent(
           type: "tool_call",
           data: {
             name: "code_execution",
-            description: "Executing Python code...",
+            description: item.code
+              ? item.code.split("\n").find((l: string) => l.trim())?.substring(0, 70) || "Running analysis..."
+              : "Running analysis...",
           },
         };
 

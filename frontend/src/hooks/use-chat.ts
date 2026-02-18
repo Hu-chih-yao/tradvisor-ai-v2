@@ -6,7 +6,6 @@ import type {
   UIMessage,
   PlanUpdateEvent,
   ToolCallEvent,
-  ChatSession,
 } from "@/lib/types";
 
 interface UseChatOptions {
@@ -17,7 +16,6 @@ export function useChat(options?: UseChatOptions) {
   const [messages, setMessages] = useState<UIMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [currentPlan, setCurrentPlan] = useState<PlanUpdateEvent | null>(null);
-  const [currentToolCalls, setCurrentToolCalls] = useState<ToolCallEvent[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -30,7 +28,6 @@ export function useChat(options?: UseChatOptions) {
     async (id: string) => {
       setSessionId(id);
       setCurrentPlan(null);
-      setCurrentToolCalls([]);
 
       const { data, error } = await supabase
         .from("chat_messages")
@@ -63,7 +60,6 @@ export function useChat(options?: UseChatOptions) {
     setSessionId(null);
     setMessages([]);
     setCurrentPlan(null);
-    setCurrentToolCalls([]);
   }, []);
 
   /**
@@ -92,7 +88,6 @@ export function useChat(options?: UseChatOptions) {
       setMessages((prev) => [...prev, userMsg, assistantMsg]);
       setIsLoading(true);
       setCurrentPlan(null);
-      setCurrentToolCalls([]);
 
       // Get auth token
       const {
@@ -136,7 +131,9 @@ export function useChat(options?: UseChatOptions) {
         const decoder = new TextDecoder();
         let buffer = "";
         let accumulatedText = "";
-        const accumulatedToolCalls: ToolCallEvent[] = [];
+        // Flat live event feed — like demo.py's >> Web Search >> Code Execution
+        // Each tool_call starts a new block; step_activity events append details to it.
+        const liveEvents: import("@/lib/types").LiveEvent[] = [];
 
         while (true) {
           const { done, value } = await reader.read();
@@ -164,14 +161,15 @@ export function useChat(options?: UseChatOptions) {
                   }
 
                   case "plan_update": {
-                    const plan = data as PlanUpdateEvent;
-                    setCurrentPlan(plan);
-                    // Update assistant message with plan (immutable update)
-                    setMessages((prev) => {
-                      const updated = [...prev];
+                    // Just update the plan checklist — no activity merging needed
+                    // since activities now live in liveEvents, not inside steps.
+                    const incomingPlan = data as PlanUpdateEvent;
+                    setCurrentPlan(incomingPlan);
+                    setMessages((prevMsgs) => {
+                      const updated = [...prevMsgs];
                       const last = updated[updated.length - 1];
                       if (last.role === "assistant") {
-                        updated[updated.length - 1] = { ...last, plan };
+                        updated[updated.length - 1] = { ...last, plan: incomingPlan };
                       }
                       return updated;
                     });
@@ -181,15 +179,20 @@ export function useChat(options?: UseChatOptions) {
                   case "tool_call": {
                     const toolCall = data as ToolCallEvent;
                     if (toolCall.name !== "update_plan") {
-                      accumulatedToolCalls.push(toolCall);
-                      setCurrentToolCalls([...accumulatedToolCalls]);
+                      liveEvents.push({
+                        id: crypto.randomUUID(),
+                        tool: toolCall.name,
+                        description: toolCall.description || "",
+                        details: [],
+                      });
+                      const snapshot = liveEvents.map((e) => ({ ...e }));
                       setMessages((prev) => {
                         const updated = [...prev];
                         const last = updated[updated.length - 1];
                         if (last.role === "assistant") {
                           updated[updated.length - 1] = {
                             ...last,
-                            toolCalls: [...accumulatedToolCalls],
+                            liveEvents: snapshot,
                           };
                         }
                         return updated;
@@ -199,40 +202,38 @@ export function useChat(options?: UseChatOptions) {
                   }
 
                   case "step_activity": {
-                    const newActivity = {
+                    const detail: import("@/lib/types").StepActivity = {
                       type: data.activity_type as "code" | "search" | "output" | "info",
                       content: data.content as string,
                       timestamp: Date.now(),
                       metadata: data.metadata as Record<string, unknown> | undefined,
                     };
 
-                    // Add activity to the currently in-progress step (immutable update)
-                    setCurrentPlan((prev) => {
-                      if (!prev) return prev;
-                      return {
-                        ...prev,
-                        steps: prev.steps.map((s) =>
-                          s.status === "in_progress"
-                            ? { ...s, activities: [...(s.activities || []), newActivity] }
-                            : s
-                        ),
+                    if (liveEvents.length > 0) {
+                      // Create a NEW object for the last event so React detects the change
+                      const lastEvent = liveEvents[liveEvents.length - 1];
+                      liveEvents[liveEvents.length - 1] = {
+                        ...lastEvent,
+                        details: [...lastEvent.details, detail],
                       };
-                    });
-                    // Also update in messages (immutable update)
+                    } else {
+                      liveEvents.push({
+                        id: crypto.randomUUID(),
+                        tool: detail.type === "search" ? "web_search" : "code_execution",
+                        description: detail.content.substring(0, 80),
+                        details: [detail],
+                      });
+                    }
+
+                    // Spread into a new array with new object references
+                    const snapshot = liveEvents.map((e) => ({ ...e }));
                     setMessages((prev) => {
                       const updated = [...prev];
                       const last = updated[updated.length - 1];
-                      if (last.role === "assistant" && last.plan) {
+                      if (last.role === "assistant") {
                         updated[updated.length - 1] = {
                           ...last,
-                          plan: {
-                            ...last.plan,
-                            steps: last.plan.steps.map((s) =>
-                              s.status === "in_progress"
-                                ? { ...s, activities: [...(s.activities || []), newActivity] }
-                                : s
-                            ),
-                          },
+                          liveEvents: snapshot,
                         };
                       }
                       return updated;
@@ -339,7 +340,6 @@ export function useChat(options?: UseChatOptions) {
     messages,
     isLoading,
     currentPlan,
-    currentToolCalls,
     sessionId,
     sendMessage,
     loadSession,
