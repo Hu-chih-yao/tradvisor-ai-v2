@@ -82,6 +82,8 @@ async function callResponsesAPI(
     model: config.model,
     tools: ALL_TOOLS,
     input,
+    // Opt-in to get web search sources so we can show them in the UI (docs: "Accessing Tool Outputs")
+    include: ["web_search_call.action.sources"],
   };
 
   if (previousResponseId) {
@@ -191,16 +193,19 @@ export async function* runAgent(
 
     for (const item of response.output) {
       // --- Built-in: web search executed server-side ---
-      // xAI format: { type: "web_search_call", action: { type: "search", query: "..." } | { type: "open_page", url: "..." } }
+      // xAI format: { type: "web_search_call", action: { type, query?, url?, sources? } }
+      // With include: ["web_search_call.action.sources"] we get sources (urls/titles) back
       if (item.type === "web_search_call") {
-        const action = (item as Record<string, unknown>).action as
-          | { type: string; query?: string; url?: string }
+        const rawItem = item as Record<string, unknown>;
+        const action = rawItem.action as
+          | { type: string; query?: string; url?: string; sources?: Array<{ url?: string; title?: string }> }
           | undefined;
 
         const isSearch = action?.type === "search";
         const isPage = action?.type === "open_page";
         const query = action?.query;
         const url = action?.url;
+        const sources = action?.sources as Array<{ url?: string; title?: string }> | undefined;
 
         const description = isSearch && query
           ? query
@@ -223,6 +228,21 @@ export async function* runAgent(
             type: "step_activity",
             data: { activity_type: "info", content: url },
           };
+        }
+
+        // Emit sources when we requested them via include (so UI can show "Found: ...")
+        if (sources && sources.length > 0) {
+          const summary = sources
+            .slice(0, 5)
+            .map((s) => s.title || s.url || "")
+            .filter(Boolean)
+            .join(" · ");
+          if (summary) {
+            yield {
+              type: "step_activity",
+              data: { activity_type: "info", content: summary.substring(0, 300) },
+            };
+          }
         }
       }
 
