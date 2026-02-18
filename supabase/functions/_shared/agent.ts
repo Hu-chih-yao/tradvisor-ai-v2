@@ -190,83 +190,92 @@ export async function* runAgent(
     const functionCallOutputs: unknown[] = [];
 
     for (const item of response.output) {
+      // Log raw item so we can see what xAI actually returns
+      console.log(`[agent] output item: ${JSON.stringify({ type: item.type, keys: Object.keys(item) })}`);
+
       // --- Built-in: web search executed server-side ---
       if (item.type === "web_search_call") {
+        // xAI may not expose query/results — extract whatever is available
+        const rawItem = item as Record<string, unknown>;
+        const searchId = rawItem.id as string || "";
+
         yield {
           type: "tool_call",
-          data: { name: "web_search", description: item.query || "Searching the web..." },
+          data: {
+            name: "web_search",
+            description: (rawItem.query as string) || "Gathering market intelligence",
+          },
         };
 
-        // Emit search query as activity
-        if (item.query) {
+        // Dump all interesting fields as activity
+        if (rawItem.query) {
           yield {
             type: "step_activity",
-            data: {
-              activity_type: "search",
-              content: item.query,
-              metadata: { search_query: item.query }
-            }
+            data: { activity_type: "search", content: rawItem.query as string, metadata: { search_query: rawItem.query } },
           };
         }
 
-        // Emit search results as activities
-        if (item.results && item.results.length > 0) {
-          const summary = item.results.slice(0, 3).map(r => r.title || r.snippet).filter(Boolean).join(", ");
+        // Check for results in various possible field names
+        const results = (rawItem.results || rawItem.search_results) as Array<{ title?: string; url?: string; snippet?: string }> | undefined;
+        if (results && results.length > 0) {
+          const summary = results.slice(0, 3).map((r) => r.title || r.snippet).filter(Boolean).join(", ");
           if (summary) {
             yield {
               type: "step_activity",
-              data: {
-                activity_type: "info",
-                content: `Found: ${summary.substring(0, 150)}${summary.length > 150 ? "..." : ""}`
-              }
+              data: { activity_type: "info", content: summary.substring(0, 200) },
             };
           }
         }
       }
 
+      // --- web_search_result (some API versions return results separately) ---
+      else if (item.type === "web_search_result" || item.type === "web_search_call_result") {
+        const rawItem = item as Record<string, unknown>;
+        const results = (rawItem.results || rawItem.search_results) as Array<{ title?: string; url?: string; snippet?: string }> | undefined;
+        if (results && results.length > 0) {
+          const summary = results.slice(0, 5).map((r) => `${r.title || ""} ${r.url || ""}`).filter(Boolean).join(" | ");
+          yield {
+            type: "step_activity",
+            data: { activity_type: "info", content: summary.substring(0, 300) },
+          };
+        }
+      }
+
       // --- Built-in: code interpreter executed server-side ---
       else if (item.type === "code_interpreter_call") {
+        const rawItem = item as Record<string, unknown>;
+        const code = rawItem.code as string | undefined;
+        const output = rawItem.output as string | undefined;
+        const error = rawItem.error as string | undefined;
+
         yield {
           type: "tool_call",
           data: {
             name: "code_execution",
-            description: item.code
-              ? item.code.split("\n").find((l: string) => l.trim())?.substring(0, 70) || "Running analysis..."
-              : "Running analysis...",
+            description: code
+              ? code.split("\n").find((l: string) => l.trim())?.substring(0, 80) || "Building financial models"
+              : "Building financial models",
           },
         };
 
-        // Emit code as activity
-        if (item.code) {
+        if (code) {
           yield {
             type: "step_activity",
-            data: {
-              activity_type: "code",
-              content: item.code,
-              metadata: { language: item.language || "python" }
-            }
+            data: { activity_type: "code", content: code, metadata: { language: "python" } },
           };
         }
 
-        // Emit output as activity
-        if (item.output) {
+        if (output) {
           yield {
             type: "step_activity",
-            data: {
-              activity_type: "output",
-              content: item.output.substring(0, 300) // Limit output length
-            }
+            data: { activity_type: "output", content: output.substring(0, 500) },
           };
         }
 
-        // Emit error as activity
-        if (item.error) {
+        if (error) {
           yield {
             type: "step_activity",
-            data: {
-              activity_type: "info",
-              content: `⚠️ Error: ${item.error}`
-            }
+            data: { activity_type: "info", content: `Error: ${error}` },
           };
         }
       }
