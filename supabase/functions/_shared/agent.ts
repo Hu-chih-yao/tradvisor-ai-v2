@@ -40,7 +40,7 @@ function getConfig() {
   return {
     apiKey,
     baseUrl: Deno.env.get("XAI_BASE_URL") || "https://api.x.ai/v1",
-    model: Deno.env.get("XAI_MODEL") || "grok-3-mini",
+    model: Deno.env.get("XAI_MODEL") || "grok-4-1-fast-reasoning",
   };
 }
 
