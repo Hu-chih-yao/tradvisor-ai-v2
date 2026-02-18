@@ -190,71 +190,56 @@ export async function* runAgent(
     const functionCallOutputs: unknown[] = [];
 
     for (const item of response.output) {
-      // Log raw item so we can see what xAI actually returns
-      console.log(`[agent] output item: ${JSON.stringify({ type: item.type, keys: Object.keys(item) })}`);
-
       // --- Built-in: web search executed server-side ---
+      // xAI format: { type: "web_search_call", action: { type: "search", query: "..." } | { type: "open_page", url: "..." } }
       if (item.type === "web_search_call") {
-        // xAI may not expose query/results — extract whatever is available
-        const rawItem = item as Record<string, unknown>;
-        const searchId = rawItem.id as string || "";
+        const action = (item as Record<string, unknown>).action as
+          | { type: string; query?: string; url?: string }
+          | undefined;
+
+        const isSearch = action?.type === "search";
+        const isPage = action?.type === "open_page";
+        const query = action?.query;
+        const url = action?.url;
+
+        const description = isSearch && query
+          ? query
+          : isPage && url
+            ? url.replace(/^https?:\/\/(www\.)?/, "").substring(0, 60)
+            : "Searching...";
 
         yield {
           type: "tool_call",
-          data: {
-            name: "web_search",
-            description: (rawItem.query as string) || "Gathering market intelligence",
-          },
+          data: { name: "web_search", description },
         };
 
-        // Dump all interesting fields as activity
-        if (rawItem.query) {
+        if (isSearch && query) {
           yield {
             type: "step_activity",
-            data: { activity_type: "search", content: rawItem.query as string, metadata: { search_query: rawItem.query } },
+            data: { activity_type: "search", content: query, metadata: { search_query: query } },
           };
-        }
-
-        // Check for results in various possible field names
-        const results = (rawItem.results || rawItem.search_results) as Array<{ title?: string; url?: string; snippet?: string }> | undefined;
-        if (results && results.length > 0) {
-          const summary = results.slice(0, 3).map((r) => r.title || r.snippet).filter(Boolean).join(", ");
-          if (summary) {
-            yield {
-              type: "step_activity",
-              data: { activity_type: "info", content: summary.substring(0, 200) },
-            };
-          }
-        }
-      }
-
-      // --- web_search_result (some API versions return results separately) ---
-      else if (item.type === "web_search_result" || item.type === "web_search_call_result") {
-        const rawItem = item as Record<string, unknown>;
-        const results = (rawItem.results || rawItem.search_results) as Array<{ title?: string; url?: string; snippet?: string }> | undefined;
-        if (results && results.length > 0) {
-          const summary = results.slice(0, 5).map((r) => `${r.title || ""} ${r.url || ""}`).filter(Boolean).join(" | ");
+        } else if (isPage && url) {
           yield {
             type: "step_activity",
-            data: { activity_type: "info", content: summary.substring(0, 300) },
+            data: { activity_type: "info", content: url },
           };
         }
       }
 
       // --- Built-in: code interpreter executed server-side ---
+      // xAI format: { type: "code_interpreter_call", code: "...", outputs: [...] }
       else if (item.type === "code_interpreter_call") {
         const rawItem = item as Record<string, unknown>;
         const code = rawItem.code as string | undefined;
-        const output = rawItem.output as string | undefined;
-        const error = rawItem.error as string | undefined;
+        const outputs = rawItem.outputs as Array<{ text?: string; type?: string }> | undefined;
 
         yield {
           type: "tool_call",
           data: {
             name: "code_execution",
             description: code
-              ? code.split("\n").find((l: string) => l.trim())?.substring(0, 80) || "Building financial models"
-              : "Building financial models",
+              ? code.split("\n").find((l: string) => l.trim())?.substring(0, 80) || "Running analysis..."
+              : "Running analysis...",
           },
         };
 
@@ -265,18 +250,14 @@ export async function* runAgent(
           };
         }
 
-        if (output) {
-          yield {
-            type: "step_activity",
-            data: { activity_type: "output", content: output.substring(0, 500) },
-          };
-        }
-
-        if (error) {
-          yield {
-            type: "step_activity",
-            data: { activity_type: "info", content: `Error: ${error}` },
-          };
+        if (outputs && outputs.length > 0) {
+          const text = outputs.map((o) => o.text || "").filter(Boolean).join("\n");
+          if (text) {
+            yield {
+              type: "step_activity",
+              data: { activity_type: "output", content: text.substring(0, 500) },
+            };
+          }
         }
       }
 
