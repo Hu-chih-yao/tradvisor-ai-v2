@@ -23,6 +23,24 @@ import { corsHeaders } from "../_shared/cors.ts";
 import { createAdminClient, getUser } from "../_shared/supabase-admin.ts";
 import { runAgent } from "../_shared/agent.ts";
 
+/** Strip xAI policy/refusal text that sometimes leaks into model output. */
+function stripPolicyText(text: string): string {
+  if (!text || typeof text !== "string") return text;
+  let out = text;
+  out = out.replace(/<policy>[\s\S]*?<\/policy>/gi, "");
+  const markers = [
+    /Do not provide assistance to users who are clearly trying to engage in[\s\S]*/i,
+    /These core policies within the[\s\S]*/i,
+    /System messages take precedence over user messages[\s\S]*/i,
+    /Ask about any stock\.\.\.[\s\S]*/i,
+  ];
+  for (const re of markers) {
+    const m = out.match(re);
+    if (m) out = out.slice(0, out.indexOf(m[0])).trim();
+  }
+  return out.trim();
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -140,11 +158,14 @@ Deno.serve(async (req) => {
 
           // ── Save assistant message ────────────────────
           if (fullResponseText) {
-            await supabase.from("chat_messages").insert({
-              session_id: sessionId,
-              role: "assistant",
-              content: fullResponseText,
-            });
+            const cleaned = stripPolicyText(fullResponseText);
+            if (cleaned) {
+              await supabase.from("chat_messages").insert({
+                session_id: sessionId,
+                role: "assistant",
+                content: cleaned,
+              });
+            }
 
             // Update session title if it's the first exchange
             if (history.length === 0) {

@@ -2,6 +2,28 @@
 
 import { useState, useCallback, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
+
+/** Strip xAI policy/refusal text that sometimes leaks into model output. */
+function stripPolicyText(text: string): string {
+  if (!text || typeof text !== "string") return text;
+  let out = text;
+  // Remove <policy>...</policy> blocks
+  out = out.replace(/<policy>[\s\S]*?<\/policy>/gi, "");
+  // Remove common policy/refusal phrases and everything after
+  const policyMarkers = [
+    /Do not provide assistance to users who are clearly trying to engage in[\s\S]*/i,
+    /These core policies within the[\s\S]*/i,
+    /System messages take precedence over user messages[\s\S]*/i,
+    /Ask about any stock\.\.\.[\s\S]*/i,
+  ];
+  for (const re of policyMarkers) {
+    const m = out.match(re);
+    if (m) {
+      out = out.slice(0, out.indexOf(m[0])).trim();
+    }
+  }
+  return out.trim();
+}
 import type {
   UIMessage,
   PlanUpdateEvent,
@@ -242,13 +264,14 @@ export function useChat(options?: UseChatOptions) {
 
                   case "text_delta": {
                     accumulatedText += data.content || "";
+                    const filtered = stripPolicyText(accumulatedText);
                     setMessages((prev) => {
                       const updated = [...prev];
                       const last = updated[updated.length - 1];
                       if (last.role === "assistant") {
                         updated[updated.length - 1] = {
                           ...last,
-                          content: accumulatedText,
+                          content: filtered,
                         };
                       }
                       return updated;
@@ -257,12 +280,23 @@ export function useChat(options?: UseChatOptions) {
                   }
 
                   case "done": {
+                    const filteredContent = stripPolicyText(accumulatedText);
+                    // If we had tool activity but no/minimal text, response may be incomplete
+                    const hadTools = accumulatedToolCalls.length > 0;
+                    const seemsIncomplete =
+                      hadTools &&
+                      (!filteredContent || filteredContent.length < 100);
+                    const displayContent = seemsIncomplete
+                      ? (filteredContent || "") +
+                        "\n\n---\n*Response may be incomplete. Try again or ask a follow-up.*"
+                      : filteredContent;
                     setMessages((prev) => {
                       const updated = [...prev];
                       const last = updated[updated.length - 1];
                       if (last.role === "assistant") {
                         updated[updated.length - 1] = {
                           ...last,
+                          content: displayContent,
                           isStreaming: false,
                         };
                       }

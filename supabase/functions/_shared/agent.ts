@@ -300,6 +300,7 @@ export async function* runAgent(
               task_summary: argsDict.task_summary || "",
               steps: argsDict.steps || [],
               is_complete: argsDict.is_complete || false,
+              explanation: (argsDict.explanation as string) || "",
             },
           };
         }

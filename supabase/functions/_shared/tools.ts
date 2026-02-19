@@ -61,6 +61,11 @@ export const UPDATE_PLAN_TOOL = {
         description:
           "Set true when ALL steps are done and final analysis is ready",
       },
+      explanation: {
+        type: "string",
+        description:
+          "Optional one-sentence on why this step and how it contributes. Shown to user as 'thinking out loud'.",
+      },
     },
     required: ["steps", "is_complete"],
   },
@@ -84,6 +89,7 @@ export interface PlanData {
   task_summary?: string;
   steps: PlanStep[];
   is_complete: boolean;
+  explanation?: string;
 }
 
 // ═══════════════════════════════════════════════════════════════

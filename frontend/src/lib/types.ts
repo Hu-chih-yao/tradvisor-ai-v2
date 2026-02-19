@@ -52,6 +52,7 @@ export interface PlanUpdateEvent {
   task_summary: string;
   steps: PlanStep[];
   is_complete: boolean;
+  explanation?: string;
 }
 
 export interface ToolCallEvent {

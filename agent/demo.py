@@ -53,8 +53,23 @@ def print_banner():
     console.print()
 
 
-def render_plan(plan_data: dict):
-    """Render the execution plan as a table."""
+def render_plan(plan_data: dict, compact: bool = False):
+    """Render the execution plan. Compact: one-line progress after first full plan."""
+    steps = plan_data.get("steps", [])
+    task = plan_data.get("task_summary", "Execution Plan")
+    explanation = plan_data.get("explanation", "").strip()
+    completed = sum(1 for s in steps if s.get("status") == "completed")
+    total = len(steps)
+
+    if compact and total > 0:
+        line = f"  [dim]⟳[/dim] [cyan]{task[:50]}{'…' if len(task) > 50 else ''}[/cyan] [dim]({completed}/{total})[/dim]"
+        if explanation:
+            line += f"  [dim]— {explanation[:40]}{'…' if len(explanation) > 40 else ''}[/dim]"
+        console.print(line)
+        return
+
+    if explanation:
+        console.print(f"  [dim]→[/dim] [italic]{explanation}[/italic]")
     table = Table(
         box=box.ROUNDED,
         border_style="cyan",
@@ -129,17 +144,21 @@ def run_query(query: str):
     """Run a single query through the agent and display results."""
     agent = TradvisorAgent()
     collected_text = ""
+    plan_count = 0
 
     console.print()
     console.print("[bold blue]Agent working...[/bold blue]")
 
     for event in agent.run(query):
         if isinstance(event, PlanUpdate):
+            plan_count += 1
+            compact = plan_count > 1 and not event.is_complete
             render_plan({
                 "task_summary": event.task_summary,
                 "steps": event.steps,
                 "is_complete": event.is_complete,
-            })
+                "explanation": getattr(event, "explanation", "") or "",
+            }, compact=compact)
 
         elif isinstance(event, ToolCall):
             render_tool_call(event)

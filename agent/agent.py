@@ -38,6 +38,7 @@ class PlanUpdate:
     task_summary: str
     steps: list
     is_complete: bool
+    explanation: str = ""
 
 
 @dataclass
@@ -152,6 +153,7 @@ class TradvisorAgent:
                             task_summary=args_dict.get("task_summary", ""),
                             steps=args_dict.get("steps", []),
                             is_complete=args_dict.get("is_complete", False),
+                            explanation=args_dict.get("explanation", "") or "",
                         )
 
                     # Execute the custom function

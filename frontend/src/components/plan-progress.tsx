@@ -167,6 +167,12 @@ export function PlanProgress({ plan }: PlanProgressProps) {
 
   return (
     <div className="rounded-lg border border-neutral-200/60 bg-neutral-50/50 p-3 md:p-4 animate-scaleIn max-w-full overflow-hidden dark:border-neutral-700 dark:bg-neutral-800/50">
+      {/* Explanation (Cursor-style "thinking out loud") */}
+      {plan.explanation && (
+        <p className="mb-2 text-[12px] italic text-neutral-600 dark:text-neutral-400">
+          {plan.explanation}
+        </p>
+      )}
       {/* Header */}
       {plan.task_summary && (
         <p className="mb-3 text-[13px] font-semibold text-neutral-800 dark:text-neutral-100 tracking-tight break-words">
